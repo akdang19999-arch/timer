@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>냥냥 타이머 🐱</title>
+<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+:root{font-family:system-ui,-apple-system,"Noto Sans KR",sans-serif;color:#202020;background:#fff5dc}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;padding:22px}
+.app{width:min(100%,470px);background:#fffdf6;border:4px solid #202020;border-radius:22px;box-shadow:9px 9px 0 #202020;overflow:hidden}
+header{background:#cbbaff;border-bottom:4px solid #202020;padding:18px 23px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+header h1{margin:0;font-size:clamp(20px,5vw,27px);letter-spacing:-1px}
+.stamp{background:white;border:2px solid #202020;border-radius:30px;padding:7px 10px;font-size:11px;font-weight:900;white-space:nowrap}
+main{padding:25px}.intro{text-align:center;margin-bottom:23px}.intro h2{font-size:24px;margin:0 0 7px}.intro p{margin:0;color:#6b6470;font-size:14px}
+.presets{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:18px}
+button{font:inherit;font-weight:900;cursor:pointer;border:3px solid #202020;border-radius:12px;box-shadow:4px 4px 0 #202020;transition:transform .12s,box-shadow .12s,background .12s}
+button:hover{transform:translate(-1px,-2px);box-shadow:5px 6px 0 #202020}button:active{transform:translate(4px,4px);box-shadow:0 0 0 #202020}
+.preset{padding:12px 5px;background:white;font-size:13px}.preset.selected{background:#ffdc66}
+.custom{background:#eee7ff;border:2px dashed #202020;border-radius:13px;padding:15px;margin-bottom:18px}
+.custom h3{font-size:14px;margin:0 0 12px}.fields{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+label{font-size:12px;font-weight:900}input{display:block;width:100%;padding:11px;margin-top:5px;border:2px solid #202020;border-radius:8px;background:white;font:inherit;font-weight:800;text-align:center}
+.apply{width:100%;margin-top:14px;padding:10px;background:#ffdc66}
+.scene{background:#fff0c5;border:3px solid #202020;border-radius:19px;position:relative;text-align:center;padding:18px 12px 24px;overflow:hidden}
+.star{position:absolute;font-size:27px;animation:twinkle 1.5s ease-in-out infinite alternate}.star.a{top:25px;left:12%}.star.b{top:66px;right:10%;animation-delay:.5s;color:#ff91a5}
+.cat{position:relative;width:188px;height:174px;margin:0 auto 5px;transform-origin:50% 100%}.cat.running{animation:bounce .8s ease-in-out infinite alternate}.cat.paused{transform:rotate(-5deg)}
+.ear{position:absolute;top:7px;width:68px;height:84px;background:#ffc46c;border:3px solid #202020;border-radius:15px;left:21px;transform:rotate(-27deg)}
+.ear.right{left:auto;right:21px;transform:rotate(27deg)}.ear:after{content:"";position:absolute;inset:13px 12px 18px;background:#f6a4a7;border-radius:12px}
+.face{position:absolute;top:38px;left:10px;width:168px;height:132px;border:3px solid #202020;border-radius:48% 48% 45% 45%;background:#ffd282}
+.eye{position:absolute;top:50px;left:45px;width:11px;height:18px;background:#202020;border-radius:50%}.eye.right{left:auto;right:45px}
+.running .eye{animation:blink 3s infinite}.cheek{position:absolute;top:77px;left:20px;width:30px;height:16px;border-radius:50%;background:#f8a2a0}.cheek.right{left:auto;right:20px}
+.nose{position:absolute;top:70px;left:76px;width:11px;height:9px;background:#202020;border-radius:50%}.mouth{position:absolute;top:80px;left:68px;font-size:22px;font-weight:900;line-height:1}
+.whisker{position:absolute;top:82px;left:3px;font-size:19px;font-weight:900}.whisker.right{left:auto;right:3px}
+.paw{position:absolute;bottom:0;left:37px;width:47px;height:27px;background:#ffe0a3;border:3px solid #202020;border-radius:50%}.paw.right{left:auto;right:37px}
+.clock{font-size:clamp(46px,12vw,66px);font-weight:1000;letter-spacing:-3px;font-variant-numeric:tabular-nums}.status{font-size:14px;font-weight:900;min-height:22px}
+.progress-label{display:flex;justify-content:space-between;font-size:12px;font-weight:900;margin:21px 0 8px}.track{height:18px;border:2px solid #202020;border-radius:30px;overflow:hidden;background:white}.bar{height:100%;background:#a9e7c4;transition:width .15s linear}
+.actions{display:grid;grid-template-columns:2fr 1fr;gap:12px;margin-top:24px}.actions button{padding:15px 8px;font-size:16px}.start{background:#a9e7c4}.reset{background:#ffb7b2}
+footer{text-align:center;font-size:12px;font-weight:800;color:#77717b;margin-top:24px}
+@keyframes bounce{to{transform:translateY(-10px) rotate(3deg)}}@keyframes blink{0%,88%,100%{transform:scaleY(1)}92%{transform:scaleY(.1)}}@keyframes twinkle{to{transform:translateY(-9px) rotate(18deg)}}
+@media(max-width:390px){body{padding:12px}.app{box-shadow:5px 5px 0 #202020}main{padding:17px}.presets{gap:6px}.preset{font-size:12px;padding:11px 3px}.actions{gap:8px}}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const {useState,useEffect,useRef}=React;
+function App(){
+ const [mode,setMode]=useState("300");
+ const [duration,setDuration]=useState(300);
+ const [remaining,setRemaining]=useState(300);
+ const [running,setRunning]=useState(false);
+ const [minutes,setMinutes]=useState("15");
+ const [seconds,setSeconds]=useState("0");
+ const [message,setMessage]=useState("");
+ const deadline=useRef(null);
+ const remainingRef=useRef(300);
+ const audioRef=useRef(null);
+ const finished=remaining===0;
+ const progress=Math.min(100,Math.max(0,Math.round((1-remaining/duration)*100)));
+ function chime(){
+  try{
+   const C=window.AudioContext||window.webkitAudioContext;if(!C)return;
+   const ctx=audioRef.current||new C();audioRef.current=ctx;ctx.resume();
+   [523,659,784].forEach((freq,i)=>{
+    const o=ctx.createOscillator(),g=ctx.createGain(),t=ctx.currentTime+i*.18;
+    o.type="sine";o.frequency.value=freq;
+    g.gain.setValueAtTime(.001,t);g.gain.exponentialRampToValueAtTime(.12,t+.02);g.gain.exponentialRampToValueAtTime(.001,t+.23);
+    o.connect(g);g.connect(ctx.destination);o.start(t);o.stop(t+.24);
+   });
+  }catch(e){}
+ }
+ function configure(n){
+  setRunning(false);deadline.current=null;remainingRef.current=n;
+  setDuration(n);setRemaining(n);setMessage("");
+ }
+ function selectMode(m){setMode(m);if(m!=="custom")configure(Number(m));else{setRunning(false);deadline.current=null;setMessage("");}}
+ function apply(){
+  const m=Number(minutes),s=Number(seconds);
+  if(minutes.trim()===""||seconds.trim()===""||!Number.isInteger(m)||!Number.isInteger(s)||m<0||m>999||s<0||s>59||m*60+s===0){
+   setMessage("1초 이상, 999분 이내로 입력해 달라냥!");return;
+  }
+  configure(m*60+s);
+ }
+ function toggle(){
+  if(running){
+   if(deadline.current!==null){const next=Math.max(0,Math.ceil((deadline.current-performance.now())/1000));remainingRef.current=next;setRemaining(next);}
+   setRunning(false);deadline.current=null;return;
+  }
+  const next=remainingRef.current===0?duration:remainingRef.current;
+  remainingRef.current=next;setRemaining(next);setMessage("");
+  deadline.current=performance.now()+next*1000;setRunning(true);
+  try{const C=window.AudioContext||window.webkitAudioContext;if(C){audioRef.current=audioRef.current||new C();audioRef.current.resume();}}catch(e){}
+ }
+ useEffect(()=>{
+  if(!running)return;
+  const id=setInterval(()=>{
+   const next=Math.max(0,Math.ceil((deadline.current-performance.now())/1000));
+   remainingRef.current=next;setRemaining(next);
+   if(next===0){clearInterval(id);setRunning(false);deadline.current=null;chime();}
+  },100);
+  return()=>clearInterval(id);
+ },[running]);
+ const formatted=String(Math.floor(remaining/60)).padStart(2,"0")+":"+String(remaining%60).padStart(2,"0");
+ const status=message||(finished?"완료! 참 잘했다냥! 🎉":running?"집중 중이다냥... 🔥":remaining<duration?"잠깐 쉬고 있냥 💤":"준비됐냥? 🐱");
+ return <div className="app">
+  <header><h1>🐾 냥냥 타이머</h1><span className="stamp">MEOW TIME!</span></header>
+  <main>
+   <div className="intro"><h2>집중할 시간이다냥! ✨</h2><p>냥이와 함께 오늘도 화이팅!</p></div>
+   <div className="presets">
+    {[["300","🍓 5분"],["600","🍋 10분"],["custom","⚙️ 직접 설정"]].map(([value,label])=><button key={value} className={"preset "+(mode===value?"selected":"")} onClick={()=>selectMode(value)} aria-pressed={mode===value}>{label}</button>)}
+   </div>
+   {mode==="custom"&&<div className="custom">
+    <h3>원하는 시간을 입력해 보라냥!</h3>
+    <div className="fields"><label>분<input type="number" min="0" max="999" value={minutes} onChange={e=>setMinutes(e.target.value)}/></label><label>초<input type="number" min="0" max="59" value={seconds} onChange={e=>setSeconds(e.target.value)}/></label></div>
+    <button className="apply" onClick={apply}>이 시간으로 설정하기 ✓</button>
+   </div>}
+   <div className="scene">
+    <span className="star a">✦</span><span className="star b">✿</span>
+    <div className={"cat "+(running?"running":remaining<duration&&remaining>0?"paused":"")} role="img" aria-label="귀여운 노란 고양이 캐릭터">
+     <div className="ear"/><div className="ear right"/>
+     <div className="face"><div className="eye"/><div className="eye right"/><div className="cheek"/><div className="cheek right"/><div className="nose"/><div className="mouth">ω</div><div className="whisker">≋</div><div className="whisker right">≋</div></div>
+     <div className="paw"/><div className="paw right"/>
+    </div>
+    <div className="clock" role="timer" aria-label={"남은 시간 "+formatted}>{formatted}</div>
+    <div className="status" aria-live="polite">{status}</div>
+   </div>
+   <div className="progress-label"><span>집중 게이지 ⚡</span><span>{progress}%</span></div>
+   <div className="track" role="progressbar" aria-valuenow={progress} aria-valuemin="0" aria-valuemax="100" aria-label="집중 진행률"><div className="bar" style={{width:progress+"%"}}/></div>
+   <div className="actions"><button className="start" onClick={toggle}>{running?"Ⅱ 일시정지":finished?"↻ 다시 시작":remaining<duration?"▶ 계속하기":"▶ 시작!"}</button><button className="reset" onClick={()=>configure(duration)}>↺ 초기화</button></div>
+   <footer>🐾 작은 집중이 모여 큰 성취가 된다냥!</footer>
+  </main>
+ </div>;
+}
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>
